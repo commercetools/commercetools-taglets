@@ -1,4 +1,4 @@
-package com.commercetools.build.maven.taglets;
+package com.commercetools.build.taglets;
 
 import com.sun.javadoc.Tag;
 import com.sun.tools.doclets.Taglet;
@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Map;
 
+@SuppressWarnings("unused")
 public final class FileIncludeTaglet implements Taglet {
 
     /**
@@ -19,11 +20,7 @@ public final class FileIncludeTaglet implements Taglet {
         try {
             return getString(tag);
         } catch (final Exception e) {
-            System.err.println(e);
-            System.err.println("in");
-            System.err.println(tag);
-            System.err.println(tag.position());
-            throw new RuntimeException(e);
+            throw new RuntimeException(String.format("Failed to include file with %s at %s", tag.name(), tag.position()), e);
         }
     }
 
