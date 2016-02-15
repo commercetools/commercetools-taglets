@@ -20,13 +20,13 @@ public final class FileIncludeTaglet implements Taglet {
         try {
             return getString(tag);
         } catch (final Exception e) {
-            throw new RuntimeException(String.format("Failed to include with {%s %s} at %s", tag.name(), tag.text(), tag.position()), e);
+            throw new RuntimeException(String.format("Failed to include with {%s %s} at %s with base %s", tag.name(), tag.text(), tag.position(), InternalTagletUtils.allProjectsBaseFile()), e);
         }
     }
 
     private String getString(final Tag tag) throws IOException {
         final String relativeFilePath = tag.text();
-        final File file = new File(new File(".").getAbsolutePath().replace("/target/site/apidocs", "").replace("/target/apidocs", ""), relativeFilePath);
+        final File file = new File(InternalTagletUtils.allProjectsBaseFile(), relativeFilePath);
         final String fileContents = new String(Files.readAllBytes(file.toPath()));
         final String htmlEscapedBody = htmlEscape(fileContents);
         final String tagId = relativeFilePath.replaceAll("[^a-zA-Z0-9]","-");
