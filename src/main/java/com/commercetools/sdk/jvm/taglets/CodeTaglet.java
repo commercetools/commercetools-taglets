@@ -104,12 +104,10 @@ public final class CodeTaglet implements Taglet {
                 throw new RuntimeException("Empty example for " + tag.text());
             }
             final String htmlEscapedImports = htmlEscape(imports);
-        final String tagId = tag.text().replaceAll("[^a-zA-Z0-9]","-");
-
-
-            final String pathToGitHubTestFile = testFile.getAbsolutePath().replace(new File(".").getAbsoluteFile().getCanonicalPath(), "https://github.com/sphereio/sphere-jvm-sdk/blob/master");
-
-
+            final String tagId = tag.text().replaceAll("[^a-zA-Z0-9]","-");
+            final String absolutePath = testFile.getAbsolutePath();
+            final String canonicalPath = new File(".").getAbsoluteFile().getCanonicalPath().replace("/target/site/apidocs", "");
+            final String pathToGitHubTestFile = absolutePath.replace(canonicalPath, "https://github.com/sphereio/sphere-jvm-sdk/blob/master");
             return "<div id=\"" + tagId + "%s\" class=code-example>"
                     + (fullFileRequested ?
                     "<button type='button' style='display: none;' class='reveal-imports'>show/hide imports</button>"
