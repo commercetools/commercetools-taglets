@@ -124,7 +124,7 @@ public final class DocumentationTaglet implements Taglet {
             builder.append("</ul>");
             result = builder.toString();
         } else if (isClientRequestList(tag)) {
-            Path currentRelativePath = Paths.get("");
+            final Path currentRelativePath = getProjectRoot();
             final ClientRequestListFileVisitor visitor = new ClientRequestListFileVisitor();
             Files.walkFileTree(currentRelativePath, visitor);
             final StringBuilder builder = new StringBuilder("<table border=1><tr><th>resource</th><th>accesors</th><th>mutators</th></tr>");
@@ -156,6 +156,24 @@ public final class DocumentationTaglet implements Taglet {
             throw new RuntimeException(tag.name() + " is not prepared to be used here: " + tag.position());
         }
         return result;
+    }
+
+    private Path getProjectRoot() {
+        return findRoot(new File(".").getAbsoluteFile(), 5).toPath();
+    }
+
+    private File findRoot(final File currentDir, final int ttl) {
+        if (ttl <= 0) {
+            throw new RuntimeException("cannot find root project folder (ttl)");
+        } else if (currentDir == null) {
+            throw new RuntimeException("cannot find root project folder (dir)");
+        }
+        final File licenseFile = new File(currentDir, "LICENSE.md");
+        if (licenseFile.exists()) {
+            return currentDir;
+        } else {
+            return findRoot(currentDir.getParentFile(), ttl - 1);
+        }
     }
 
     private boolean isEntityQueryClassBuilder(final Tag tag) {
