@@ -50,7 +50,7 @@ public final class CodeTaglet implements Taglet {
                 final int fileLength = (int) testFile.length();
                 final StringBuilder fileContents = new StringBuilder(fileLength);
                 final StringBuilder importStatements = new StringBuilder(fileLength);
-                String lineSeparator = System.getProperty("line.separator");
+                final String lineSeparator = File.separator;
                 try (Scanner scanner = new Scanner(testFile)) {
                     Position position = Position.START;
                     while (scanner.hasNextLine()) {
@@ -73,11 +73,11 @@ public final class CodeTaglet implements Taglet {
                     imports = importStatements.toString();
                 }
             } else {
-                final String testName = tag.text().substring(pos + 1);
+                final String testName = tag.text().substring(pos + 1).trim();
                 final Scanner scanner = new Scanner(testFile);
                 List<String> lines = new ArrayList<>();
                 boolean endFound = false;
-            while(scanner.hasNext() && !endFound) {
+                while(scanner.hasNext() && !endFound) {
                     String current = scanner.findInLine("(public|private|protected) .* " + testName + "\\(.*");
                     final boolean methodStartFound = current != null;
                     if (methodStartFound) {
@@ -101,7 +101,7 @@ public final class CodeTaglet implements Taglet {
             }
             final String htmlEscapedBody = htmlEscape(res);
             if ("".equals(htmlEscapedBody)) {
-                throw new RuntimeException("Empty example for " + tag.text());
+                throw new RuntimeException("Empty example for " + tag.text() + " in " + testFile.getAbsolutePath());
             }
             final String htmlEscapedImports = htmlEscape(imports);
             final String tagId = tag.text().replaceAll("[^a-zA-Z0-9]","-");
@@ -153,7 +153,7 @@ public final class CodeTaglet implements Taglet {
             throw new RuntimeException("cannot find file for " + fullyQualifiedClassName + " for " + tag.position() + " in " + cwd);
         }
         return result;
-        }
+    }
 
     private File allProjectsBase() {
         return InternalTagletUtils.allProjectsBaseFile();
