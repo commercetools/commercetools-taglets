@@ -114,7 +114,7 @@ public final class DocumentationTaglet implements Taglet {
             final File currentFile = Objects.requireNonNull(tag.position().file(), "command dir not found");
 
 
-            final String folderForUpdateActions = currentFile.getParentFile().getAbsolutePath().replace("/commercetools-models/target/generated-sources/annotations/", "/commercetools-models/src/main/java/");
+            final String folderForUpdateActions = currentFile.getParentFile().getAbsolutePath().replace("/target/generated-sources/annotations/", "/src/main/java/");
             final File updateactionsDirectory = new File(new File(folderForUpdateActions), "updateactions");
             final List<String> updateActionNames =
                     asList(updateactionsDirectory.listFiles((file, name) -> name.endsWith(".java") && !name.contains("-")))
@@ -190,7 +190,7 @@ public final class DocumentationTaglet implements Taglet {
         if (isUpdateActionIntro(tag)) {
             final File parentFile = updateActionFile.getParentFile().getParentFile();
             final String parentPathInGenerated = parentFile.getAbsolutePath()
-                    .replace("/commercetools-models/src/main/java/", "/commercetools-models/target/generated-sources/annotations/");
+                    .replace("/src/main/java/", "/target/generated-sources/annotations/");
             final File updateCommand = Stream.of(parentFile, new File(parentPathInGenerated))
                     .flatMap(file -> Arrays.stream(file.listFiles((dir, fileName) -> fileName.endsWith("UpdateCommand.java"))))
                     .findFirst().orElseThrow(() -> new RuntimeException("command not found for " + updateActionFile));
