@@ -11,7 +11,9 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
+import static com.commercetools.build.taglets.InternalTagletUtils.usableException;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
@@ -78,8 +80,8 @@ public final class DocumentationTaglet implements Taglet {
     public String toString(final Tag tag) {
         try {
             return getString(tag);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw usableException(this, tag, e);
         }
     }
 
@@ -110,8 +112,10 @@ public final class DocumentationTaglet implements Taglet {
             result = format("Provides a domain specific language to formulate predicates and search expressions for querying %s.", furtherArgs(tag));
         } else if (isUpdateCommandClass(tag) && tag.text().contains("list actions")) {
             final File currentFile = Objects.requireNonNull(tag.position().file(), "command dir not found");
-            final File commandsDirectory = currentFile.getParentFile();
-            final File updateactionsDirectory = new File(commandsDirectory, "updateactions");
+
+
+            final String folderForUpdateActions = currentFile.getParentFile().getAbsolutePath().replace("/commercetools-models/target/generated-sources/annotations/", "/commercetools-models/src/main/java/");
+            final File updateactionsDirectory = new File(new File(folderForUpdateActions), "updateactions");
             final List<String> updateActionNames =
                     asList(updateactionsDirectory.listFiles((file, name) -> name.endsWith(".java") && !name.contains("-")))
                             .stream()
@@ -184,7 +188,12 @@ public final class DocumentationTaglet implements Taglet {
     private String renderIntro(final Tag tag) {
         final File updateActionFile = tag.position().file();
         if (isUpdateActionIntro(tag)) {
-            final File updateCommand = updateActionFile.getParentFile().getParentFile().listFiles((dir, fileName) -> fileName.endsWith("UpdateCommand.java"))[0];
+            final File parentFile = updateActionFile.getParentFile().getParentFile();
+            final String parentPathInGenerated = parentFile.getAbsolutePath()
+                    .replace("/commercetools-models/src/main/java/", "/commercetools-models/target/generated-sources/annotations/");
+            final File updateCommand = Stream.of(parentFile, new File(parentPathInGenerated))
+                    .flatMap(file -> Arrays.stream(file.listFiles((dir, fileName) -> fileName.endsWith("UpdateCommand.java"))))
+                    .findFirst().orElseThrow(() -> new RuntimeException("command not found for " + updateActionFile));
             final String updateCommandClassName = updateCommand.getName().replace(".java", "");
             final String entityName = updateCommandClassName.replace("UpdateCommand", "");
             return format("<p>See also <a href=\"../%s.html\">%s</a>.<p>", updateCommandClassName, updateCommandClassName);

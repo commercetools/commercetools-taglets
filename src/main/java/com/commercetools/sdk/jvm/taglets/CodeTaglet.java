@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
+import static com.commercetools.build.taglets.InternalTagletUtils.usableException;
 import static java.lang.String.format;
 
 public final class CodeTaglet implements Taglet {
@@ -21,8 +22,8 @@ public final class CodeTaglet implements Taglet {
     public String toString(Tag tag) {
         try {
             return getString(tag);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw usableException(this, tag, e);
         }
     }
 
