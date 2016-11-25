@@ -51,7 +51,7 @@ public final class CodeTaglet implements Taglet {
                 final int fileLength = (int) testFile.length();
                 final StringBuilder fileContents = new StringBuilder(fileLength);
                 final StringBuilder importStatements = new StringBuilder(fileLength);
-                final String lineSeparator = File.separator;
+                final String lineSeparator = System.getProperty("line.separator");//do not confuse with File.separator
                 try (Scanner scanner = new Scanner(testFile)) {
                     Position position = Position.START;
                     while (scanner.hasNextLine()) {
