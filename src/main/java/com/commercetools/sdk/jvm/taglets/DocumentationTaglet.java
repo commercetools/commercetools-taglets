@@ -263,7 +263,7 @@ public final class DocumentationTaglet implements Taglet {
         public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
             FileVisitResult result = FileVisitResult.CONTINUE;
             final String name = dir.getFileName().toFile().getName();
-            if (name.equals("target") || name.equals("test") || name.equals("it") || name.startsWith(".")) {
+            if (name.equals("test") || name.equals("it") || name.startsWith(".")) {
                 result = FileVisitResult.SKIP_SUBTREE;
             }
             return result;
