@@ -137,7 +137,7 @@ public final class DocumentationTaglet implements Taglet {
 
                 final Function<String, String> mapper = m -> {
                     final String fullClassName = m.substring(m.indexOf("/io/sphere/sdk")).replace(".java", "").replace("/", ".");
-                    return "<a href='" + relativeUrlTo(tag, fullClassName) + "'>" + fullClassNameToSimple(fullClassName) + "</a>";
+                    return "<a href='" + relativeUrlTo(tag, fullClassName).replace("//", "/") + "'>" + fullClassNameToSimple(fullClassName) + "</a>";
                 };
                 final List<String> accessors = entry.getValue().getAccessors().stream().map(mapper).collect(toList());
                 final List<String> mutators = entry.getValue().getMutators().stream().map(mapper).collect(toList());
