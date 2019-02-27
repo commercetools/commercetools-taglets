@@ -1,31 +1,58 @@
 package com.commercetools.build.taglets;
 
-import com.sun.javadoc.Tag;
-import com.sun.tools.doclets.Taglet;
+import com.sun.source.doctree.DocTree;
+import jdk.javadoc.doclet.Doclet;
+import jdk.javadoc.doclet.DocletEnvironment;
+import jdk.javadoc.doclet.Taglet;
 
+import javax.lang.model.element.Element;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static com.commercetools.build.taglets.InternalTagletUtils.usableException;
 
 @SuppressWarnings("unused")
 public final class FileIncludeTaglet implements Taglet {
 
-    /**
-     * Generates the String output for a tag
-     * @param tag
-     * @return
-     */
-    public String toString(Tag tag) {
+    private DocletEnvironment env;
+
+    @Override
+    public void init(final DocletEnvironment env, final Doclet doclet) {
+        this.env = env;
+    }
+
+    @Override
+    public Set<Location> getAllowedLocations() {
+        final Set<Location> allowedLocations = new HashSet<>();
+        allowedLocations.add(Location.MODULE);
+        allowedLocations.add(Location.PACKAGE);
+        allowedLocations.add(Location.TYPE);
+        allowedLocations.add(Location.CONSTRUCTOR);
+        allowedLocations.add(Location.FIELD);
+        allowedLocations.add(Location.METHOD);
+        allowedLocations.add(Location.OVERVIEW);
+        return allowedLocations;
+    }
+
+    @Override
+    public String toString(List<? extends DocTree> tags, Element element) {
+        final DocTree docTree = tags.get(0);
+        final int beginning = 2 + getName().length(); // { + @ + length of the tag name. Used to extract tag text (the part after @)
+        final String text = docTree.toString().substring(beginning, docTree.toString().length() - 1).trim();
+
         try {
-            return getString(tag);
-        } catch (final Exception e) {
-            throw new RuntimeException(String.format("Failed to include with {%s %s} at %s with base %s", tag.name(), tag.text(), tag.position(), InternalTagletUtils.allProjectsBaseFile()), e);
+            return getString(text, element);
+        } catch (Exception e) {
+            throw usableException(this, text, element, e);
         }
     }
 
-    private String getString(final Tag tag) throws IOException {
-        final String relativeFilePath = tag.text();
+    private String getString(final String tagText, final Element element) throws IOException {
+        final String relativeFilePath = tagText;
         final File file = new File(InternalTagletUtils.allProjectsBaseFile(), relativeFilePath);
         final String fileContents = new String(Files.readAllBytes(file.toPath()));
         final String htmlEscapedBody = htmlEscape(fileContents);
@@ -45,46 +72,7 @@ public final class FileIncludeTaglet implements Taglet {
         return "include.file";
     }
 
-    public boolean inField() {
-        return true;
-    }
-
-    public boolean inConstructor() {
-        return true;
-    }
-
-    public boolean inMethod() {
-        return true;
-    }
-
-    public boolean inOverview() {
-        return true;
-    }
-
-    public boolean inPackage() {
-        return true;
-    }
-
-    public boolean inType() {
-        return true;
-    }
-
     public boolean isInlineTag() {
         return true;
-    }
-
-    @SuppressWarnings("unused")//used by the Javadoc tool
-    public static void register(Map<String, Taglet> tagletMap) {
-        final FileIncludeTaglet createdTaglet = new FileIncludeTaglet();
-        final Taglet t = tagletMap.get(createdTaglet.getName());
-        if (t != null) {
-            tagletMap.remove(createdTaglet.getName());
-        }
-        tagletMap.put(createdTaglet.getName(), createdTaglet);
-    }
-
-    //only needed for block taglets
-    public String toString(Tag[] tags) {
-        return null;
     }
 }
