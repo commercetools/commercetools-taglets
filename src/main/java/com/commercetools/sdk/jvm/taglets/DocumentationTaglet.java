@@ -379,11 +379,6 @@ public final class DocumentationTaglet implements Taglet {
         return builder.toString() + fullClassName.replace('.', '/') + ".html";
     }
 
-    private String getAbsolutePath(final Element element) {
-        return this.env.getDocTrees().getPath(element).getCompilationUnit().getSourceFile().toUri().getPath();
-    }
-
-    //TODO print this - might be different
     private String getFileName(final Element element){
         return this.env.getDocTrees().getPath(element).getCompilationUnit().getSourceFile().getName();
     }
