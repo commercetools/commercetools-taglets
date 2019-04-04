@@ -2,13 +2,10 @@ package com.commercetools.sdk.jvm.taglets;
 
 import com.commercetools.build.taglets.InternalTagletUtils;
 import com.sun.source.doctree.DocTree;
-import jdk.javadoc.doclet.Doclet;
-import jdk.javadoc.doclet.DocletEnvironment;
 import jdk.javadoc.doclet.Taglet;
 
 import javax.lang.model.element.Element;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
@@ -16,13 +13,6 @@ import static com.commercetools.build.taglets.InternalTagletUtils.usableExceptio
 import static java.lang.String.format;
 
 public final class CodeTaglet implements Taglet {
-
-    private DocletEnvironment env;
-
-    @Override
-    public void init(final DocletEnvironment env, final Doclet doclet) {
-        this.env = env;
-    }
 
     @Override
     public Set<Taglet.Location> getAllowedLocations() {
@@ -42,7 +32,6 @@ public final class CodeTaglet implements Taglet {
         final DocTree docTree = tags.get(0);
         final int beginning = 2 + getName().length(); // { + @ + length of the tag name. Used to extract tag text (the part after @)
         final String text = docTree.toString().substring(beginning, docTree.toString().length() - 1).trim();
-
         try {
             return getString(text, element);
         } catch (Exception e) {
@@ -182,15 +171,6 @@ public final class CodeTaglet implements Taglet {
 
     private File allProjectsBase() {
         return InternalTagletUtils.allProjectsBaseFile();
-    }
-
-    private List<String> fileToArray(File testFile) throws FileNotFoundException {
-        final Scanner scanner = new Scanner(testFile);
-        List<String> lines = new ArrayList<>();
-        while(scanner.hasNext()) {
-            lines.add(scanner.nextLine());
-        }
-        return lines;
     }
 
     public String getName() {

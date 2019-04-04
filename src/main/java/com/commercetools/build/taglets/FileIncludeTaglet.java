@@ -40,6 +40,7 @@ public final class FileIncludeTaglet implements Taglet {
 
     @Override
     public String toString(List<? extends DocTree> tags, Element element) {
+
         final DocTree docTree = tags.get(0);
         final int beginning = 2 + getName().length(); // { + @ + length of the tag name. Used to extract tag text (the part after @)
         final String text = docTree.toString().substring(beginning, docTree.toString().length() - 1).trim();
@@ -58,7 +59,6 @@ public final class FileIncludeTaglet implements Taglet {
         final String htmlEscapedBody = htmlEscape(fileContents);
         final String tagId = relativeFilePath.replaceAll("[^a-zA-Z0-9]","-");
         final String codeCssClass = relativeFilePath.endsWith(".java") ? "java" : "";
-
         return "<div id='" + tagId + "' style='background: #f0f0f0;'>"
                 + "<pre><code class='" + codeCssClass + "'>" + htmlEscapedBody + "</code></pre>"
                 + "</div>";
