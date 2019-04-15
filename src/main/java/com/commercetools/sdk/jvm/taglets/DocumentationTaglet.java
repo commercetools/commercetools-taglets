@@ -366,7 +366,7 @@ public final class DocumentationTaglet implements Taglet {
     }
 
     private boolean isPackage(Element element) {
-        return  getFileName(element).equals("package-info.java");
+        return getFileName(element).endsWith("/package-info.java");
     }
 
     private String relativeUrlTo(final Element element, final String fullClassName) {
