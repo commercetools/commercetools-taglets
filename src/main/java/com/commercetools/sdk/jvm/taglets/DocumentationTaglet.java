@@ -123,7 +123,8 @@ public final class DocumentationTaglet implements Taglet {
             updateActionNames.forEach(name -> builder.append(format("<li><a href=\"%s/%s.html\">%s</a></li>", UPDATEACTIONS_PACKAGE, name, name)));
             builder.append("</ul>");
             result = builder.toString();
-        } else if (isClientRequestList(tagText)) {
+        }
+        else if (isClientRequestList(tagText)) {
             final Path currentRelativePath = getProjectRoot();
             final ClientRequestListFileVisitor visitor = new ClientRequestListFileVisitor();
             Files.walkFileTree(currentRelativePath, visitor);
