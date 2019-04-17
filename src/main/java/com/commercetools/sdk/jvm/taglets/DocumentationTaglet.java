@@ -113,11 +113,15 @@ public final class DocumentationTaglet implements Taglet {
         } else if (isUpdateCommandClass(tag) && tag.text().contains("list actions")) {
             final File currentFile = Objects.requireNonNull(tag.position().file(), "command dir not found");
 
+            final String folderForGeneratedUpdateActions = currentFile.getParentFile().getAbsolutePath();
+            final String folderForUpdateActions = folderForGeneratedUpdateActions.replace("/target/generated-sources/annotations/", "/src/main/java/");
+            final File generatedUpdateActionsDirectory = new File(new File(folderForGeneratedUpdateActions), "updateactions");
+            final File updateActionsDirectory = new File(new File(folderForUpdateActions), "updateactions");
 
-            final String folderForUpdateActions = currentFile.getParentFile().getAbsolutePath().replace("/target/generated-sources/annotations/", "/src/main/java/");
-            final File updateactionsDirectory = new File(new File(folderForUpdateActions), "updateactions");
+            final List<File> updateActions = Arrays.stream(Optional.ofNullable(updateActionsDirectory.listFiles((file, name) -> name.endsWith(".java") && !name.contains("-"))).orElse(new File[]{})).collect(toList());
+            updateActions.addAll(asList(Optional.ofNullable(generatedUpdateActionsDirectory.listFiles((file, name) -> name.endsWith(".java") && !name.contains("-"))).orElse(new File[]{})));
             final List<String> updateActionNames =
-                    asList(updateactionsDirectory.listFiles((file, name) -> name.endsWith(".java") && !name.contains("-")))
+                    updateActions
                             .stream()
                             .filter(FILE_CONTAINS_PUBLIC_UPDATEACTION_PREDICATE)
                             .map(file -> file.getName().replace(".java", ""))
