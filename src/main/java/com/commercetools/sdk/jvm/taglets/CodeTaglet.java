@@ -1,11 +1,11 @@
 package com.commercetools.sdk.jvm.taglets;
 
 import com.commercetools.build.taglets.InternalTagletUtils;
-import com.sun.javadoc.Tag;
-import com.sun.tools.doclets.Taglet;
+import com.sun.source.doctree.DocTree;
+import jdk.javadoc.doclet.Taglet;
 
+import javax.lang.model.element.Element;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
@@ -14,16 +14,28 @@ import static java.lang.String.format;
 
 public final class CodeTaglet implements Taglet {
 
-    /**
-     * Generates the String output for a tag
-     * @param tag
-     * @return
-     */
-    public String toString(Tag tag) {
+    @Override
+    public Set<Taglet.Location> getAllowedLocations() {
+        final Set<Location> allowedLocations = new HashSet<>();
+        allowedLocations.add(Location.MODULE);
+        allowedLocations.add(Location.PACKAGE);
+        allowedLocations.add(Location.TYPE);
+        allowedLocations.add(Location.CONSTRUCTOR);
+        allowedLocations.add(Location.FIELD);
+        allowedLocations.add(Location.METHOD);
+        allowedLocations.add(Location.OVERVIEW);
+        return allowedLocations;
+    }
+
+    @Override
+    public String toString(List<? extends DocTree> tags, Element element) {
+        final DocTree docTree = tags.get(0);
+        final int beginning = 2 + getName().length(); // { + @ + length of the tag name. Used to extract tag text (the part after @)
+        final String text = docTree.toString().substring(beginning, docTree.toString().length() - 1).trim();
         try {
-            return getString(tag);
+            return getString(text, element);
         } catch (Exception e) {
-            throw usableException(this, tag, e);
+            throw usableException(this, text, element, e);
         }
     }
 
@@ -31,18 +43,18 @@ public final class CodeTaglet implements Taglet {
         START, IMPORTS, CODE
     }
 
-    private String getString(final Tag tag) throws IOException {
+    private String getString(final String tagText, final Element element) throws IOException {
         try {
-            int pos = tag.text().indexOf("#");
+            int pos = tagText.indexOf("#");
             final boolean fullFileRequested = pos == -1;
             if (fullFileRequested) {
-                pos = tag.text().length();
+                pos = tagText.length();
             }
-            final String fullyQualifiedClassName = tag.text().substring(0, pos);
+            final String fullyQualifiedClassName = tagText.substring(0, pos);
             final String partialFilePath = fullyQualifiedClassName.replace('.', '/').concat(".java");
 
 
-            final File testFile = findFile(fullyQualifiedClassName, partialFilePath, tag);
+            final File testFile = findFile(fullyQualifiedClassName, partialFilePath, element);
 
             String imports = "";
             String res = "";
@@ -74,7 +86,7 @@ public final class CodeTaglet implements Taglet {
                     imports = importStatements.toString();
                 }
             } else {
-                final String testName = tag.text().substring(pos + 1).trim();
+                final String testName = tagText.substring(pos + 1).trim();
                 final Scanner scanner = new Scanner(testFile);
                 List<String> lines = new ArrayList<>();
                 boolean endFound = false;
@@ -102,10 +114,10 @@ public final class CodeTaglet implements Taglet {
             }
             final String htmlEscapedBody = htmlEscape(res);
             if ("".equals(htmlEscapedBody)) {
-                throw new RuntimeException("Empty example for " + tag.text() + " in " + testFile.getAbsolutePath());
+                throw new RuntimeException("Empty example for " + tagText + " in " + testFile.getAbsolutePath());
             }
             final String htmlEscapedImports = htmlEscape(imports);
-            final String tagId = tag.text().replaceAll("[^a-zA-Z0-9]","-");
+            final String tagId = tagText.replaceAll("[^a-zA-Z0-9]","-");
             final String absolutePath = testFile.getAbsolutePath();
             final String canonicalPath = new File(".").getAbsoluteFile().getCanonicalPath().replace("/target/site/apidocs", "");
             final String pathToGitHubTestFile = absolutePath.replace(canonicalPath, "https://github.com/commercetools/commercetools-jvm-sdk/blob/master");
@@ -119,18 +131,17 @@ public final class CodeTaglet implements Taglet {
         } catch (final Exception e) {
             System.err.println(e);
             System.err.println("in");
-            System.err.println(tag);
-            System.err.println(tag.position());
+            System.err.println(element);
+            System.err.println(element.getSimpleName());
             throw e;
         }
-
     }
 
     private String htmlEscape(final String res) {
         return res.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
-    private File findFile(String fullyQualifiedClassName, String partialFilePath, final Tag tag) throws IOException {
+    private File findFile(String fullyQualifiedClassName, String partialFilePath, final Element element) throws IOException {
         final File cwd = allProjectsBase();
         final File[] directories = cwd.listFiles(file -> file.isDirectory() && !file.getName().startsWith("."));
         boolean found = false;
@@ -151,7 +162,7 @@ public final class CodeTaglet implements Taglet {
             }
         }
         if (!found) {
-            throw new RuntimeException("cannot find file for " + fullyQualifiedClassName + " for " + tag.position() + " in " + cwd);
+            throw new RuntimeException("cannot find file for " + fullyQualifiedClassName + " for " + element.getSimpleName() + " in " + cwd);
         }
         return result;
     }
@@ -160,59 +171,11 @@ public final class CodeTaglet implements Taglet {
         return InternalTagletUtils.allProjectsBaseFile();
     }
 
-    private List<String> fileToArray(File testFile) throws FileNotFoundException {
-        final Scanner scanner = new Scanner(testFile);
-        List<String> lines = new ArrayList<>();
-        while(scanner.hasNext()) {
-            lines.add(scanner.nextLine());
-        }
-        return lines;
-    }
-
     public String getName() {
         return "include.example";
     }
 
-    public boolean inField() {
-        return true;
-    }
-
-    public boolean inConstructor() {
-        return true;
-    }
-
-    public boolean inMethod() {
-        return true;
-    }
-
-    public boolean inOverview() {
-        return true;
-    }
-
-    public boolean inPackage() {
-        return true;
-    }
-
-    public boolean inType() {
-        return true;
-    }
-
     public boolean isInlineTag() {
         return true;
-    }
-
-    @SuppressWarnings("unused")//used by the Javadoc tool
-    public static void register(Map<String, Taglet> tagletMap) {
-        final CodeTaglet createdTaglet = new CodeTaglet();
-        final Taglet t = tagletMap.get(createdTaglet.getName());
-        if (t != null) {
-            tagletMap.remove(createdTaglet.getName());
-        }
-        tagletMap.put(createdTaglet.getName(), createdTaglet);
-    }
-
-    //only needed for block taglets
-    public String toString(Tag[] tags) {
-        return null;
     }
 }
