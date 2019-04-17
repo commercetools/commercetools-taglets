@@ -1,8 +1,11 @@
 package com.commercetools.sdk.jvm.taglets;
 
-import com.sun.javadoc.Tag;
-import com.sun.tools.doclets.Taglet;
+import com.sun.source.doctree.DocTree;
+import jdk.javadoc.doclet.Doclet;
+import jdk.javadoc.doclet.DocletEnvironment;
+import jdk.javadoc.doclet.Taglet;
 
+import javax.lang.model.element.Element;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -28,6 +31,8 @@ public final class DocumentationTaglet implements Taglet {
                     .stream()
                     .anyMatch(line -> line.contains("public class " + file.getName().replace(".java", "")) || line.contains("public final class " + file.getName().replace(".java", "")));
 
+    private DocletEnvironment env;
+
     private static List<String> readAllLines(final File file) {
         try {
             return Files.readAllLines(Paths.get(file.toURI()), StandardCharsets.UTF_8);
@@ -37,33 +42,34 @@ public final class DocumentationTaglet implements Taglet {
     }
 
     @Override
-    public boolean inField() {
-        return true;
+    public void init(final DocletEnvironment env, final Doclet doclet) {
+        this.env = env;
     }
 
     @Override
-    public boolean inConstructor() {
-        return true;
+    public Set<Location> getAllowedLocations() {
+        final Set<Location> allowedLocations = new HashSet<>();
+        allowedLocations.add(Location.MODULE);
+        allowedLocations.add(Location.PACKAGE);
+        allowedLocations.add(Location.TYPE);
+        allowedLocations.add(Location.CONSTRUCTOR);
+        allowedLocations.add(Location.FIELD);
+        allowedLocations.add(Location.METHOD);
+        allowedLocations.add(Location.OVERVIEW);
+        return allowedLocations;
     }
 
     @Override
-    public boolean inMethod() {
-        return true;
-    }
+    public String toString(List<? extends DocTree> tags, Element element) {
+        final DocTree docTree = tags.get(0);
+        final int beginning = 2 + getName().length(); // { + @ + length of the tag name. Used to extract tag text (the part after @)
+        final String text = docTree.toString().substring(beginning, docTree.toString().length() - 1).trim();
 
-    @Override
-    public boolean inOverview() {
-        return true;
-    }
-
-    @Override
-    public boolean inPackage() {
-        return true;
-    }
-
-    @Override
-    public boolean inType() {
-        return true;
+        try {
+            return getString(text, element);
+        } catch (Exception e) {
+            throw usableException(this, text, element, e);
+        }
     }
 
     @Override
@@ -76,42 +82,33 @@ public final class DocumentationTaglet implements Taglet {
         return "doc.gen";
     }
 
-    @Override
-    public String toString(final Tag tag) {
-        try {
-            return getString(tag);
-        } catch (Exception e) {
-            throw usableException(this, tag, e);
-        }
-    }
-
-    private String getString(final Tag tag) throws IOException {
+    private String getString(final String tagText, final Element element) throws IOException {
         String result = null;
-        if (isPackage(tag)) {
-            if (isSummary(tag)) {
-                if (isCommandPackage(tag)) {
-                    result = format("Provides types to change the state of %s.", furtherArgs(tag));
-                } else if (isUpdateactionsPackage(tag)) {
-                    result = format("Provides the possible operations which can be performed on update commands for %s.", furtherArgs(tag));
-                } else if (isQueriesPackage(tag)) {
-                    result = format("Provides types to retrieve the state of %s.", furtherArgs(tag));
-                } else if (isExpansionPackage(tag)) {
-                    result = format("Provides reference expansion models for %s.", furtherArgs(tag));
+        if (isPackage(element)) {
+            if (isSummary(tagText)) {
+                if (isCommandPackage(element)) {
+                    result = format("Provides types to change the state of %s.", furtherArgs(tagText));
+                } else if (isUpdateactionsPackage(element)) {
+                    result = format("Provides the possible operations which can be performed on update commands for %s.", furtherArgs(tagText));
+                } else if (isQueriesPackage(element)) {
+                    result = format("Provides types to retrieve the state of %s.", furtherArgs(tagText));
+                } else if (isExpansionPackage(element)) {
+                    result = format("Provides reference expansion models for %s.", furtherArgs(tagText));
                 } else {//model package
-                    result = format("Provides model classes and builders for %s.", furtherArgs(tag));
+                    result = format("Provides model classes and builders for %s.", furtherArgs(tagText));
                 }
             }
-        } else if (isEntityQueryClass(tag)) {
+        } else if (isEntityQueryClass(element)) {
             result = format("Provides a QueryDsl for %s to formulate predicates, search expressions and reference expansion path expressions. " +
-                    "<p>For further information how to use the query API to consult the <a href='" + relativeUrlTo(tag, "io.sphere.sdk.meta.QueryDocumentation") +
-                    "'>Query API documentation</a>.</p>", furtherArgs(tag));
-        } else if (isEntityQueryClassBuilder(tag)) {
-            final String queryClassSimpleName = getClassName(tag).replace("Builder", "");
+                    "<p>For further information how to use the query API to consult the <a href='" + relativeUrlTo(element, "io.sphere.sdk.meta.QueryDocumentation") +
+                    "'>Query API documentation</a>.</p>", furtherArgs(tagText));
+        } else if (isEntityQueryClassBuilder(element)) {
+            final String queryClassSimpleName = getClassName(element).replace("Builder", "");
             result = format("A Builder for <a href='%s.html'>%s</a>.", queryClassSimpleName, queryClassSimpleName);
-        } else if (isQueryModelClass(tag)) {
-            result = format("Provides a domain specific language to formulate predicates and search expressions for querying %s.", furtherArgs(tag));
-        } else if (isUpdateCommandClass(tag) && tag.text().contains("list actions")) {
-            final File currentFile = Objects.requireNonNull(tag.position().file(), "command dir not found");
+        } else if (isQueryModelClass(element)) {
+            result = format("Provides a domain specific language to formulate predicates and search expressions for querying %s.", furtherArgs(tagText));
+        } else if (isUpdateCommandClass(element) && tagText.contains("list actions")) {
+            final File currentFile = Objects.requireNonNull(getFile(element), "command dir not found");
 
             final String folderForGeneratedUpdateActions = currentFile.getParentFile().getAbsolutePath();
             final String folderForUpdateActions = folderForGeneratedUpdateActions.replace("/target/generated-sources/annotations/", "/src/main/java/");
@@ -131,7 +128,8 @@ public final class DocumentationTaglet implements Taglet {
             updateActionNames.forEach(name -> builder.append(format("<li><a href=\"%s/%s.html\">%s</a></li>", UPDATEACTIONS_PACKAGE, name, name)));
             builder.append("</ul>");
             result = builder.toString();
-        } else if (isClientRequestList(tag)) {
+        }
+        else if (isClientRequestList(tagText)) {
             final Path currentRelativePath = getProjectRoot();
             final ClientRequestListFileVisitor visitor = new ClientRequestListFileVisitor();
             Files.walkFileTree(currentRelativePath, visitor);
@@ -141,7 +139,7 @@ public final class DocumentationTaglet implements Taglet {
 
                 final Function<String, String> mapper = m -> {
                     final String fullClassName = m.substring(m.indexOf("/io/sphere/sdk")).replace(".java", "").replace("/", ".");
-                    return "<a href='" + relativeUrlTo(tag, fullClassName).replace("//", "/") + "'>" + fullClassNameToSimple(fullClassName) + "</a>";
+                    return "<a href='" + relativeUrlTo(element, fullClassName).replace("//", "/") + "'>" + fullClassNameToSimple(fullClassName) + "</a>";
                 };
                 final List<String> accessors = entry.getValue().getAccessors().stream().map(mapper).collect(toList());
                 final List<String> mutators = entry.getValue().getMutators().stream().map(mapper).collect(toList());
@@ -153,15 +151,15 @@ public final class DocumentationTaglet implements Taglet {
             });
             builder.append("</table>");
             result = builder.toString();
-        } else if (isFileInclude(tag)) {
+        } else if (isFileInclude(tagText)) {
             throw new RuntimeException("file include is not supported anymore in " + getClass());
-        } else if (isIntro(tag)) {
-            result = renderIntro(tag);
+        } else if (isIntro(tagText)) {
+            result = renderIntro(element);
         }
 
         //final String s = String.format("firstSentenceTags() %s\n<br>holder() %s\n<br>inlineTags() %s\n<br>kind() %s\n<br>position() %s\n<br>text()\n<br> %s\n<br>toS %s", Arrays.toString(tag.firstSentenceTags()), tag.holder(), Arrays.toString(tag.inlineTags()), tag.kind(), tag.position(), tag.text(), tag.toString());
         if (result == null) {
-            throw new RuntimeException(tag.name() + " is not prepared to be used here: " + tag.position());
+            throw new RuntimeException(tagText + " is not prepared to be used here: " + element.getSimpleName());
         }
         return result;
     }
@@ -184,14 +182,14 @@ public final class DocumentationTaglet implements Taglet {
         }
     }
 
-    private boolean isEntityQueryClassBuilder(final Tag tag) {
-        final String className = getClassName(tag);
+    private boolean isEntityQueryClassBuilder(final Element element) {
+        final String className = getClassName(element);
         return className.endsWith("QueryBuilder");
     }
 
-    private String renderIntro(final Tag tag) {
-        final File updateActionFile = tag.position().file();
-        if (isUpdateActionIntro(tag)) {
+    private String renderIntro(final Element element) {
+        final File updateActionFile = getFile(element);
+        if (isUpdateActionIntro(element)) {
             final File parentFile = updateActionFile.getParentFile().getParentFile();
             final String parentPathInGenerated = parentFile.getAbsolutePath()
                     .replace("/src/main/java/", "/target/generated-sources/annotations/");
@@ -206,16 +204,16 @@ public final class DocumentationTaglet implements Taglet {
         }
     }
 
-    private boolean isUpdateActionIntro(final Tag tag) {
-        return "updateactions".equals(getLastPackageName(tag));
+    private boolean isUpdateActionIntro(final Element element) {
+        return "updateactions".equals(getLastPackageName(element));
     }
 
-    private boolean isIntro(final Tag tag) {
-        return tag.text().startsWith("intro");
+    private boolean isIntro(final String tagText) {
+        return tagText.startsWith("intro");
     }
 
-    private boolean isFileInclude(final Tag tag) {
-        return tag.text().startsWith("include file ");
+    private boolean isFileInclude(final String tagText) {
+        return tagText.startsWith("include file ");
     }
 
     private String fullClassNameToSimple(final String fullClassName) {
@@ -305,31 +303,31 @@ public final class DocumentationTaglet implements Taglet {
         }
     }
 
-    private boolean isUpdateCommandClass(final Tag tag) {
-        return getClassName(tag).endsWith("UpdateCommand");
+    private boolean isUpdateCommandClass(final Element element) {
+        return getClassName(element).endsWith("UpdateCommand");
     }
 
-    private boolean isQueryModelClass(final Tag tag) {
-        return getClassName(tag).endsWith("QueryModel");
+    private boolean isQueryModelClass(final Element element) {
+        return getClassName(element).endsWith("QueryModel");
     }
 
-    private boolean isClientRequestList(final Tag tag) {
-        return tag.text().equals("list clientrequests");
+    private boolean isClientRequestList(final String tagText) {
+        return tagText.equals("list clientrequests");
     }
 
-    private boolean isEntityQueryClass(final Tag tag) {
-        final String className = getClassName(tag);
+    private boolean isEntityQueryClass(final Element element) {
+        final String className = getClassName(element);
         return className.endsWith("Query");
     }
 
-    private String furtherArgs(final Tag tag) {
-        final String allArgs = tag.text().trim();
+    private String furtherArgs(final String tagText) {
+        final String allArgs = tagText.trim();
         final int startSecondArg = allArgs.indexOf(" ");
         return allArgs.substring(startSecondArg);
     }
 
-    private boolean isSummary(final Tag tag) {
-        return tag.text().startsWith("summary");
+    private boolean isSummary(final String tagText) {
+        return tagText.startsWith("summary");
     }
 
     private List<String> fileNamePathSegments(final File file) {
@@ -340,49 +338,45 @@ public final class DocumentationTaglet implements Taglet {
         }
     }
 
-    private boolean isUpdateactionsPackage(final Tag tag) {
-        return getLastPackageName(tag).equals(UPDATEACTIONS_PACKAGE);
+    private boolean isUpdateactionsPackage(final Element element) {
+        return getLastPackageName(element).equals(UPDATEACTIONS_PACKAGE);
     }
 
-    private boolean isCommandPackage(final Tag tag) {
-        return getLastPackageName(tag).equals("commands");
+    private boolean isCommandPackage(final Element element) {
+        return getLastPackageName(element).equals("commands");
     }
 
-    private boolean isExpansionPackage(final Tag tag) {
-        return getLastPackageName(tag).equals("expansion");
+    private boolean isExpansionPackage(final Element element) {
+        return getLastPackageName(element).equals("expansion");
     }
 
-    private boolean isQueriesPackage(final Tag tag) {
-        return getLastPackageName(tag).equals("queries");
+    private boolean isQueriesPackage(final Element element) {
+        return getLastPackageName(element).equals("queries");
     }
 
-    private boolean isModelPackage(final Tag tag) {
-        return !(isCommandPackage(tag) || isQueriesPackage(tag));
-    }
-
-    private String getLastPackageName(final Tag tag) {
-        final List<String> strings = fileNamePathSegments(tag.position().file());
+    private String getLastPackageName(final Element element) {
+        final List<String> strings = fileNamePathSegments(new File(this.env.getDocTrees().getPath(element).getCompilationUnit().getSourceFile().toUri()));
         return strings.get(strings.size() - 2);
     }
 
-    private String getClassName(final Tag tag) {
-        return tag.position().file().getName().replace(".java", "");
+    private String getClassName(final Element element) {
+        return getFile(element).getName().replace(".java", "");
     }
 
-    private String getFullPackage(final Tag tag) {
-        final String absolutePath = tag.position().file().getAbsolutePath();
+    private String getFullPackage(final Element element) {
+        final String absolutePath = getFile(element).getAbsolutePath();
         final String dir = "src/main/java";
         final int codeRootOfThisModule = absolutePath.indexOf(dir) + dir.length() + 1;
         final String substring = absolutePath.substring(codeRootOfThisModule);
-        return substring.replace(tag.position().file().getName(), "").replace('/', '.');
+        return substring.replace(getFile(element).getName(), "").replace('/', '.');
     }
 
-    private boolean isPackage(final Tag tag) {
-        return tag.position().file().getName().equals("package-info.java");
+    private boolean isPackage(Element element) {
+        return getFileName(element).endsWith("/package-info.java");
     }
 
-    private String relativeUrlTo(final Tag tag, final String fullClassName) {
-        final String[] split = getFullPackage(tag).split("\\.");
+    private String relativeUrlTo(final Element element, final String fullClassName) {
+        final String[] split = getFullPackage(element).split("\\.");
         final int countBack = split.length;
         final StringBuilder builder = new StringBuilder();
         for (final String aSplit : split) {
@@ -391,19 +385,11 @@ public final class DocumentationTaglet implements Taglet {
         return builder.toString() + fullClassName.replace('.', '/') + ".html";
     }
 
-
-    @Override
-    public String toString(final Tag[] tags) {
-        return null;
+    private String getFileName(final Element element){
+        return this.env.getDocTrees().getPath(element).getCompilationUnit().getSourceFile().getName();
     }
 
-    @SuppressWarnings("unused")//used by the Javadoc tool
-    public static void register(Map<String, Taglet> tagletMap) {
-        final DocumentationTaglet createdTaglet = new DocumentationTaglet();
-        final Taglet t = tagletMap.get(createdTaglet.getName());
-        if (t != null) {
-            tagletMap.remove(createdTaglet.getName());
-        }
-        tagletMap.put(createdTaglet.getName(), createdTaglet);
+    private File getFile(final Element element){
+        return new File(this.env.getDocTrees().getPath(element).getCompilationUnit().getSourceFile().toUri());
     }
 }

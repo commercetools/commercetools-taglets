@@ -1,9 +1,8 @@
 package com.commercetools.build.taglets;
 
-import com.commercetools.sdk.jvm.taglets.CodeTaglet;
-import com.sun.javadoc.Tag;
-import com.sun.tools.doclets.Taglet;
+import jdk.javadoc.doclet.Taglet;
 
+import javax.lang.model.element.Element;
 import java.io.File;
 import java.util.Arrays;
 
@@ -20,7 +19,7 @@ public final class InternalTagletUtils {
         return isAlreadyAllRoot ?  parentFile : parentFile.getParentFile().getAbsoluteFile();
     }
 
-    public static RuntimeException usableException(final Taglet taglet, final Tag tag, final Exception e) {
-        return new RuntimeException(format("error in taglet %s with tag %s for source %s, stacktrace: %s", taglet, tag, tag.position(), Arrays.toString(e.getStackTrace())), e);
+    public static RuntimeException usableException(final Taglet taglet, final String tagText, final Element element, final Exception e) {
+        return new RuntimeException(format("error in taglet %s with tag %s for source %s, stacktrace: %s", taglet, tagText, element.getSimpleName(), Arrays.toString(e.getStackTrace())), e);
     }
 }
