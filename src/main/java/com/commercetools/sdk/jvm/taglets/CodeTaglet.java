@@ -1,13 +1,26 @@
 package com.commercetools.sdk.jvm.taglets;
 
 import com.commercetools.build.taglets.InternalTagletUtils;
+import com.github.javaparser.StaticJavaParser;
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration;
 import com.sun.javadoc.Tag;
 import com.sun.tools.doclets.Taglet;
+import org.jboss.forge.roaster.Roaster;
+import org.jboss.forge.roaster.model.JavaType;
+import org.jboss.forge.roaster.model.JavaUnit;
+import org.jboss.forge.roaster.model.source.*;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.commercetools.build.taglets.InternalTagletUtils.usableException;
 import static java.lang.String.format;
@@ -47,58 +60,18 @@ public final class CodeTaglet implements Taglet {
             String imports = "";
             String res = "";
             if (fullFileRequested) {
-                //partially from http://stackoverflow.com/a/326448
-                final int fileLength = (int) testFile.length();
-                final StringBuilder fileContents = new StringBuilder(fileLength);
-                final StringBuilder importStatements = new StringBuilder(fileLength);
-                final String lineSeparator = System.getProperty("line.separator");//do not confuse with File.separator
-                try (Scanner scanner = new Scanner(testFile)) {
-                    Position position = Position.START;
-                    while (scanner.hasNextLine()) {
-                        final String line = scanner.nextLine();
-                        final String trimmedLine = line.trim();
-                        if (position != Position.CODE && "".equals(trimmedLine)) {
-                            //ignore
-                        } else if (position == Position.START && trimmedLine.startsWith("package")) {
-                            position = Position.IMPORTS;
-                        } else if (position == Position.IMPORTS && trimmedLine.startsWith("import")) {
-                            importStatements.append(line).append(lineSeparator);
-                        } else if (position == Position.IMPORTS || position == Position.CODE) {
-                            position = Position.CODE;
-                            fileContents.append(line).append(lineSeparator);
-                        } else {
-                            throw new IllegalStateException("can't parse Java file");
-                        }
-                    }
-                    res = fileContents.toString();
-                    imports = importStatements.toString();
-                }
+                final CompilationUnit parse = StaticJavaParser.parse(testFile);
+                final ClassOrInterfaceDeclaration declaration = parse.getLocalDeclarationFromClassname(fullyQualifiedClassName).get(0);
+                res = declaration.getTokenRange().get().toString() + "\n";
+                imports = parse.getImports().stream().map(Node::toString).collect(Collectors.joining("\n"));
             } else {
-                final String testName = tag.text().substring(pos + 1).trim();
-                final Scanner scanner = new Scanner(testFile);
-                List<String> lines = new ArrayList<>();
-                boolean endFound = false;
-                while(scanner.hasNext() && !endFound) {
-                    String current = scanner.findInLine("(public|private|protected) .* " + testName + "\\(.*");
-                    final boolean methodStartFound = current != null;
-                    if (methodStartFound) {
-                        scanner.nextLine();
-                        do {
-                            current = scanner.nextLine();
-                            endFound = current.equals("    }") || current.contains("//end example parsing here");
-                            if (!endFound) {
-                                final String currentWithoutLeadingWhitespace = current.replaceFirst("        ", "");
-                                lines.add(currentWithoutLeadingWhitespace);
-                            }
-                        } while (!endFound);
-                    } else {
-                        scanner.nextLine();
-                    }
-                }
-
-                for (String s : lines) {
-                    res += s + "\n";
-                }
+                String testName = tag.text().substring(pos + 1).trim();
+                final String methodName = testName.substring(0, testName.indexOf("(")).trim();
+                final CompilationUnit parse = StaticJavaParser.parse(testFile);
+                final ClassOrInterfaceDeclaration declaration = parse.getLocalDeclarationFromClassname(fullyQualifiedClassName).get(0);
+                final MethodDeclaration method = declaration.getMethodsByName(methodName).get(0);
+                final String bodyRange = Arrays.stream(method.getBody().get().getTokenRange().get().toString().split("\n")).map(line -> line.replaceFirst("        ", "")).collect(Collectors.joining("\n"));
+                res = bodyRange.substring(1, bodyRange.length() - 1 ).trim() + "\n";
             }
             final String htmlEscapedBody = htmlEscape(res);
             if ("".equals(htmlEscapedBody)) {

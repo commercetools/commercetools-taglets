@@ -13,6 +13,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
+        <version.javaparser>3.20.2</version.javaparser>
     </properties>
 
     <licenses>
@@ -54,6 +55,11 @@
             <version>1.4.2</version>
             <scope>system</scope>
             <systemPath>${java.home}/../lib/tools.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-symbol-solver-core</artifactId>
+            <version>${version.javaparser}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
