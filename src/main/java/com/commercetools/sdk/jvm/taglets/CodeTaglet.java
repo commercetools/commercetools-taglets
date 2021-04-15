@@ -6,19 +6,12 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration;
 import com.sun.javadoc.Tag;
 import com.sun.tools.doclets.Taglet;
-import org.jboss.forge.roaster.Roaster;
-import org.jboss.forge.roaster.model.JavaType;
-import org.jboss.forge.roaster.model.JavaUnit;
-import org.jboss.forge.roaster.model.source.*;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
