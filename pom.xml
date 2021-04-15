@@ -4,7 +4,7 @@
 
     <groupId>com.commercetools.build.taglets</groupId>
     <artifactId>commercetools-taglets</artifactId>
-    <version>0.8.6</version>
+    <version>0.8.7-SNAPSHOT</version>
     <packaging>jar</packaging>
     <description>Javadoc Taglets used by commercetools</description>
     <name>commercetools-taglets</name>
@@ -28,7 +28,7 @@
         <developerConnection>scm:git:git@github.com:commercetools/commercetools-taglets.git</developerConnection>
         <url>git@github.com:commercetools/commercetools-taglets.git</url>
         <connection>scm:git:git@github.com:commercetools/commercetools-taglets.git</connection>
-        <tag>v0.8.6</tag>
+        <tag>HEAD</tag>
     </scm>
     <developers>
         <developer>
