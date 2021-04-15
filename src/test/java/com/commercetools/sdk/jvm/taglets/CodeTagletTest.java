@@ -21,6 +21,20 @@ public class CodeTagletTest {
     }
 
     @Test
+    public void testExampleWithoutBrackets()
+    {
+        Tag tag = new TextTag(null, "example.AddressExample#withMethods");
+        CodeTaglet t = new CodeTaglet();
+        String example = t.toString(tag);
+
+        String withMethods = "<div id=\"example-AddressExample-withMethods%s\" class=code-example><pre><code class='java'>final Address addressWithContactData = address\n" +
+                "        .withEmail(\"hello@commercetools.de\")\n" +
+                "        .withPhone(\"+49.89.99 82 996-0\");\n" +
+                "</code><p>See the <a href=\"https://github.com/commercetools/commercetools-jvm-sdk/blob/master/src/test/java/example/AddressExample.java\" target=\"_blank\">test code</a>.</pre></div>";
+        Assert.assertEquals(withMethods, example);
+    }
+
+    @Test
     public void testInterfaceExample()
     {
         Tag tag = new TextTag(null, "example.Address#of()");

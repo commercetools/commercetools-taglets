@@ -59,7 +59,8 @@ public final class CodeTaglet implements Taglet {
                 imports = parse.getImports().stream().map(Node::toString).collect(Collectors.joining("\n"));
             } else {
                 String testName = tag.text().substring(pos + 1).trim();
-                final String methodName = testName.substring(0, testName.indexOf("(")).trim();
+                final int posParenthesis = testName.indexOf("(");
+                final String methodName = testName.substring(0, posParenthesis > 0 ? posParenthesis : testName.length()).trim();
                 final CompilationUnit parse = StaticJavaParser.parse(testFile);
                 final ClassOrInterfaceDeclaration declaration = parse.getLocalDeclarationFromClassname(fullyQualifiedClassName).get(0);
                 final MethodDeclaration method = declaration.getMethodsByName(methodName).get(0);
