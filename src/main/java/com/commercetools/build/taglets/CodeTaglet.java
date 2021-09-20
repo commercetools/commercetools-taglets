@@ -132,7 +132,7 @@ public final class CodeTaglet implements Taglet {
                                .collect(Collectors.toList());
         }
         for (final File directory : directories) {
-            final List<String> possibleSubfolders = Arrays.asList("/src/test/java", "/src/it/java");
+            final List<String> possibleSubfolders = Arrays.asList("/src/test/java", "/src/it/java", "/src/integrationTest/java", "/src/main/java");
             for (int subIndex = 0; subIndex < possibleSubfolders.size(); subIndex++) {
                 final String pathToTest = possibleSubfolders.get(subIndex) + "/" + partialFilePath;
                 final File attempt = new File(directory, pathToTest).getCanonicalFile();
