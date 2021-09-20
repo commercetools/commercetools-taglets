@@ -50,9 +50,13 @@ public final class FileIncludeTaglet implements Taglet {
         final String htmlEscapedBody = htmlEscape(fileContents);
         final String tagId = tagText.replaceAll("[^a-zA-Z0-9]","-");
         final String codeCssClass = tagText.endsWith(".java") ? "java" : "";
-
+        final String absolutePath = file.getAbsolutePath();
+        final String canonicalPath = new File(".").getAbsoluteFile().getCanonicalPath().replace("/build/docs", "");
+        final String pathToGitHubTestFile = absolutePath.replace(canonicalPath,
+                "https://github.com/commercetools/commercetools-sdk-java-v2/blob/master");
         return "<div id='" + tagId + "' style='background: #f0f0f0;'>"
-                + "<pre><code class='" + codeCssClass + "'>" + htmlEscapedBody + "</code></pre>"
+                + "<pre><a href=\"" + pathToGitHubTestFile + "\" target=\"_blank\">" + file.getName() + "</a>:<br/>"
+                + "<code class='" + codeCssClass + "'>" + htmlEscapedBody + "</code></pre>"
                 + "</div>";
     }
 

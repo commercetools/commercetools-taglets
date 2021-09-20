@@ -85,7 +85,7 @@ public class CodeTagletTest {
 
             @Override
             public String toString() {
-                return "{@inline.example example.AddressExample#withMethods()}";
+                return "{@include.example example.AddressExample#withMethods()}";
             }
         };
 
@@ -120,7 +120,7 @@ public class CodeTagletTest {
 
             @Override
             public String toString() {
-                return "{@inline.example example.AddressExample#withMethods}";
+                return "{@include.example example.AddressExample#withMethods}";
             }
         };
         CodeTaglet t = new CodeTaglet();
@@ -153,7 +153,7 @@ public class CodeTagletTest {
 
             @Override
             public String toString() {
-                return "{@inline.example example.Address#of()}";
+                return "{@include.example example.Address#of()}";
             }
         };
         CodeTaglet t = new CodeTaglet();
@@ -185,7 +185,7 @@ public class CodeTagletTest {
 
             @Override
             public String toString() {
-                return "{@inline.example example.Address}";
+                return "{@include.example example.Address}";
             }
         };
         CodeTaglet t = new CodeTaglet();
@@ -203,5 +203,49 @@ public class CodeTagletTest {
                 "}\n" +
                 "</code><p>See the <a href=\"https://github.com/commercetools/commercetools-sdk-java-v2/blob/master/src/test/java/example/Address.java\" target=\"_blank\">test code</a>.</pre></div>";
         Assert.assertEquals(file, example);
+    }
+
+    @Test
+    public void testFileInclude()
+    {
+        TextTree tag = new TextTree() {
+            @Override
+            public String getBody() {
+                return "src/test/java/example/Address.java";
+            }
+
+            @Override
+            public Kind getKind() {
+                return null;
+            }
+
+            @Override
+            public <R, D> R accept(DocTreeVisitor<R, D> visitor, D data) {
+                return null;
+            }
+
+            @Override
+            public String toString() {
+                return "{@include.file src/test/java/example/Address.java}";
+            }
+        };
+        FileIncludeTaglet t = new FileIncludeTaglet();
+        String example = t.toString(List.of(tag), new DocTest());
+
+        String withMethods = "<div id='src-test-java-example-Address-java' style='background: #f0f0f0;'><pre><a href=\"https://github.com/commercetools/commercetools-sdk-java-v2/blob/master/src/test/java/example/Address.java\" target=\"_blank\">Address.java</a>:<br/><code class='java'>package example;\n" +
+                "\n" +
+                "import java.util.List;\n" +
+                "\n" +
+                "public interface Address {\n" +
+                "    Address withEmail(String value);\n" +
+                "    Address withPhone(String value);\n" +
+                "    List&lt;String&gt; getElements();\n" +
+                "\n" +
+                "    public static List&lt;String&gt; of(Address address) {\n" +
+                "        return address.getElements();\n" +
+                "    }\n" +
+                "}\n" +
+                "</code></pre></div>";
+        Assert.assertEquals(withMethods, example);
     }
 }
