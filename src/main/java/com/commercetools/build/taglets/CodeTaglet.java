@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import javax.lang.model.element.Element;
 
+import com.github.javaparser.ast.body.TypeDeclaration;
 import jdk.javadoc.doclet.Taglet;
 
 import com.github.javaparser.StaticJavaParser;
@@ -68,7 +69,11 @@ public final class CodeTaglet implements Taglet {
             if (fullFileRequested) {
                 final CompilationUnit parse = StaticJavaParser.parse(testFile);
                 final ClassOrInterfaceDeclaration declaration = parse
-                        .getLocalDeclarationFromClassname(fullyQualifiedClassName)
+                        .getTypes()
+                        .stream().filter(typeDeclaration -> typeDeclaration instanceof ClassOrInterfaceDeclaration)
+                        .map(typeDeclaration -> (ClassOrInterfaceDeclaration)typeDeclaration)
+                        .filter(classOrInterfaceDeclaration -> classOrInterfaceDeclaration.getFullyQualifiedName().orElse("").endsWith(fullyQualifiedClassName))
+                        .collect(Collectors.toList())
                         .get(0);
                 res = declaration.getTokenRange().get().toString() + "\n";
                 imports = parse.getImports().stream().map(Node::toString).collect(Collectors.joining("\n"));
