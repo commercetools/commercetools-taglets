@@ -141,7 +141,7 @@ public final class CodeTaglet implements Taglet {
             for (int subIndex = 0; subIndex < possibleSubfolders.size(); subIndex++) {
                 final String pathToTest = possibleSubfolders.get(subIndex) + "/" + partialFilePath;
                 final File attempt = new File(directory, pathToTest).getCanonicalFile();
-                if (attempt.exists()) {
+                if (attempt.exists() && !attempt.getPath().matches("\\/build\\/")) {
                     if (found) {
                         throw new RuntimeException(
                                 format("the class %s exists multiple times.", fullyQualifiedClassName));
