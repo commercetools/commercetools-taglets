@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 
 import javax.lang.model.element.Element;
 
-import com.github.javaparser.ast.body.TypeDeclaration;
 import jdk.javadoc.doclet.Taglet;
 
 import com.github.javaparser.StaticJavaParser;
@@ -27,6 +26,9 @@ import com.sun.source.doctree.DocTree;
 public final class CodeTaglet implements Taglet {
 
     private static List<File> directories;
+
+    private static final Map<File, CompilationUnit> parsedFiles = new HashMap<>();
+
     @Override
     public Set<Taglet.Location> getAllowedLocations() {
         final Set<Location> allowedLocations = new HashSet<>();
@@ -66,8 +68,12 @@ public final class CodeTaglet implements Taglet {
 
             String imports = "";
             String res = "";
+            if (!parsedFiles.containsKey(testFile)) {
+                parsedFiles.put(testFile, StaticJavaParser.parse(testFile));
+            }
+
             if (fullFileRequested) {
-                final CompilationUnit parse = StaticJavaParser.parse(testFile);
+                final CompilationUnit parse = parsedFiles.get(testFile);
                 final ClassOrInterfaceDeclaration declaration = parse
                         .getTypes()
                         .stream().filter(typeDeclaration -> typeDeclaration instanceof ClassOrInterfaceDeclaration)
@@ -83,7 +89,7 @@ public final class CodeTaglet implements Taglet {
                 final int posParenthesis = testName.indexOf("(");
                 final String methodName = testName.substring(0, posParenthesis > 0 ? posParenthesis : testName.length())
                                                   .trim();
-                final CompilationUnit parse = StaticJavaParser.parse(testFile);
+                final CompilationUnit parse = parsedFiles.get(testFile);
                 final ClassOrInterfaceDeclaration declaration = parse
                         .getLocalDeclarationFromClassname(fullyQualifiedClassName)
                         .get(0);
