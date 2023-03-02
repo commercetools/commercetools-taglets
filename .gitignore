@@ -5,3 +5,9 @@ target/
 .project
 .eclipse
 .mvn/maven.config
+
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build

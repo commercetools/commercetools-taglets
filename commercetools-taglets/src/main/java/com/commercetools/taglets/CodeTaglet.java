@@ -1,7 +1,7 @@
 
-package com.commercetools.build.taglets;
+package com.commercetools.taglets;
 
-import static com.commercetools.build.taglets.InternalTagletUtils.usableException;
+import static com.commercetools.taglets.InternalTagletUtils.usableException;
 import static java.lang.String.format;
 
 import java.io.File;
@@ -150,7 +150,7 @@ public final class CodeTaglet implements Taglet {
                 if (attempt.exists() && !attempt.getPath().matches(".*\\/build\\/.*")) {
                     if (found) {
                         throw new RuntimeException(
-                                format("the class %s exists multiple times.", fullyQualifiedClassName));
+                                String.format("the class %s exists multiple times.", fullyQualifiedClassName));
                     }
                     else {
                         result = attempt;

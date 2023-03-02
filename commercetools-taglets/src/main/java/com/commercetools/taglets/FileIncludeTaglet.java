@@ -1,4 +1,4 @@
-package com.commercetools.build.taglets;
+package com.commercetools.taglets;
 
 import com.sun.source.doctree.DocTree;
 import jdk.javadoc.doclet.Taglet;
@@ -40,7 +40,7 @@ public final class FileIncludeTaglet implements Taglet {
             return getString(text, element);
         }
         catch (Exception e) {
-            throw new RuntimeException(String.format("Failed to include with {%s} at %s with base %s", text, InternalTagletUtils.allProjectsBaseFile()), e);
+            throw new RuntimeException(String.format("Failed to include with {%s} at %s with base %s", text, beginning, InternalTagletUtils.allProjectsBaseFile()), e);
         }
     }
 

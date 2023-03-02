@@ -1,9 +1,9 @@
-package com.commercetools.build.taglets;
+package com.commercetools.taglets;
 
 import com.sun.source.doctree.DocTreeVisitor;
 import com.sun.source.doctree.TextTree;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import javax.lang.model.element.*;
 import javax.lang.model.type.TypeMirror;
@@ -132,7 +132,7 @@ public class CodeTagletTest {
                 "        .withEmail(\"hello@commercetools.de\")\n" +
                 "        .withPhone(\"+49.89.99 82 996-0\");\n" +
                 "</code><p>See the <a href=\"https://github.com/commercetools/commercetools-sdk-java-v2/blob/master/src/test/java/example/AddressExample.java\" target=\"_blank\">test code</a>.</pre></div>";
-        Assert.assertEquals(withMethods, example);
+        Assertions.assertEquals(withMethods, example);
     }
 
     @Test
@@ -147,7 +147,7 @@ public class CodeTagletTest {
                 "        .withEmail(\"hello@commercetools.de\")\n" +
                 "        .withPhone(\"+49.89.99 82 996-0\");\n" +
                 "</code><p>See the <a href=\"https://github.com/commercetools/commercetools-sdk-java-v2/blob/master/src/test/java/example/AddressExample.java\" target=\"_blank\">test code</a>.</pre></div>";
-        Assert.assertEquals(withMethods, example);
+        Assertions.assertEquals(withMethods, example);
     }
     @Test
     public void testInterfaceExample()
@@ -159,7 +159,7 @@ public class CodeTagletTest {
 
         String withMethods = "<div id=\"example-Address-of--%s\" class=code-example><pre><code class='java'>return address.getElements();\n" +
                 "</code><p>See the <a href=\"https://github.com/commercetools/commercetools-sdk-java-v2/blob/master/src/test/java/example/Address.java\" target=\"_blank\">test code</a>.</pre></div>";
-        Assert.assertEquals(withMethods, example);
+        Assertions.assertEquals(withMethods, example);
     }
 
     @Test
@@ -181,7 +181,7 @@ public class CodeTagletTest {
                 "    }\n" +
                 "}\n" +
                 "</code><p>See the <a href=\"https://github.com/commercetools/commercetools-sdk-java-v2/blob/master/src/test/java/example/Address.java\" target=\"_blank\">test code</a>.</pre></div>";
-        Assert.assertEquals(file, example);
+        Assertions.assertEquals(file, example);
     }
 
     @Test
@@ -201,18 +201,18 @@ public class CodeTagletTest {
                 "    }\n" +
                 "}\n" +
                 "</code><p>See the <a href=\"https://github.com/commercetools/commercetools-sdk-java-v2/blob/master/src/test/java/example/InnerClassTest.java\" target=\"_blank\">test code</a>.</pre></div>";
-        Assert.assertEquals(file, example);
+        Assertions.assertEquals(file, example);
     }
 
     @Test
     public void testFileInclude()
     {
-        TextTree tag = new IncludeFileTag("src/test/java/example/Address.java");
+        TextTree tag = new IncludeFileTag("commercetools-taglets/src/test/java/example/Address.java");
 
         FileIncludeTaglet t = new FileIncludeTaglet();
         String example = t.toString(List.of(tag), new DocTest());
 
-        String withMethods = "<div id='src-test-java-example-Address-java' style='background: #f0f0f0;'><pre><a href=\"https://github.com/commercetools/commercetools-sdk-java-v2/blob/master/src/test/java/example/Address.java\" target=\"_blank\">Address.java</a>:<br/><code class='java'>package example;\n" +
+        String withMethods = "<div id='commercetools-taglets-src-test-java-example-Address-java' style='background: #f0f0f0;'><pre><a href=\"https://github.com/commercetools/commercetools-sdk-java-v2/blob/master/src/test/java/example/Address.java\" target=\"_blank\">Address.java</a>:<br/><code class='java'>package example;\n" +
                 "\n" +
                 "import java.util.List;\n" +
                 "\n" +
@@ -226,6 +226,6 @@ public class CodeTagletTest {
                 "    }\n" +
                 "}\n" +
                 "</code></pre></div>";
-        Assert.assertEquals(withMethods, example);
+        Assertions.assertEquals(withMethods, example);
     }
 }

@@ -1,5 +1,5 @@
 
-package com.commercetools.build.taglets;
+package com.commercetools.taglets;
 
 import static java.lang.String.format;
 
@@ -25,7 +25,7 @@ public final class InternalTagletUtils {
 
     public static RuntimeException usableException(final Taglet taglet, final String tagText, final Element element,
                                                    final Exception e) {
-        return new RuntimeException(format("error in taglet %s with tag %s for source %s, stacktrace: %s", taglet,
+        return new RuntimeException(String.format("error in taglet %s with tag %s for source %s, stacktrace: %s", taglet,
                 tagText, element.getSimpleName(), Arrays.toString(e.getStackTrace())), e);
     }
 }
