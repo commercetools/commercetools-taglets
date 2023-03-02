@@ -15,8 +15,10 @@ repositories {
     mavenCentral()
 }
 
-
-group='com.commercetools.build.taglets'
+allprojects {
+    description = "Javadoc Taglets used by commercetools"
+    group='com.commercetools.build.taglets'
+}
 
 ext {
     scmProjectName = rootProject.name
