@@ -8,9 +8,7 @@ import org.jsoup.select.Elements;
 
 import javax.lang.model.element.Element;
 import javax.tools.JavaFileManager;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ToCTaglet implements Taglet {
 
@@ -47,11 +45,11 @@ public class ToCTaglet implements Taglet {
         StringBuilder toc = new StringBuilder("");
         toc.append("<b>Table of content</b>")
            .append("<ul>");
-        boolean opened = false;
+        int opened = 1;
         for (org.jsoup.nodes.Element heading: headings) {
             if (heading.tagName().compareTo(e.tagName()) > 0) {
                 toc.append("<ul>");
-                opened = true;
+                opened += 1;
             }
 
             toc.append("<li>");
@@ -67,12 +65,12 @@ public class ToCTaglet implements Taglet {
             toc.append("</li>");
             if (heading.tagName().compareTo(e.tagName()) < 0) {
                 toc.append("</ul>");
+                opened -= 1;
             }
             e = heading;
         }
-        if (opened)
-            toc.append("</ul>");
-        toc.append("</ul>");
+        toc.append(String.join("", Collections.nCopies(opened, "</ul>")));
+
         return toc.toString();
     }
 }
