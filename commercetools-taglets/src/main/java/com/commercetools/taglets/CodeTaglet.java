@@ -2,7 +2,6 @@
 package com.commercetools.taglets;
 
 import static com.commercetools.taglets.InternalTagletUtils.usableException;
-import static java.lang.String.format;
 
 import java.io.File;
 import java.io.FileNotFoundException;
