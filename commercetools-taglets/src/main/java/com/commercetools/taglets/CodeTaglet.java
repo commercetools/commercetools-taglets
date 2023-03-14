@@ -27,6 +27,7 @@ public final class CodeTaglet implements Taglet {
     private static List<File> directories;
 
     private static final Map<File, CompilationUnit> parsedFiles = new HashMap<>();
+    private static final Map<String, File> classFiles = new HashMap<>();
 
     @Override
     public Set<Taglet.Location> getAllowedLocations() {
@@ -61,9 +62,15 @@ public final class CodeTaglet implements Taglet {
                 pos = tagText.length();
             }
             final String fullyQualifiedClassName = tagText.substring(0, pos);
-            final String partialFilePath = fullyQualifiedClassName.replace('.', '/').concat(".java");
+            final File testFile;
+            if (!classFiles.containsKey(fullyQualifiedClassName)) {
+                final String partialFilePath = fullyQualifiedClassName.replace('.', '/').concat(".java");
 
-            final File testFile = findFile(fullyQualifiedClassName, partialFilePath, element);
+                testFile = findFile(fullyQualifiedClassName, partialFilePath, element);
+                classFiles.put(fullyQualifiedClassName, testFile);
+            } else {
+                testFile = classFiles.get(fullyQualifiedClassName);
+            }
 
             String imports = "";
             String res = "";
@@ -92,7 +99,11 @@ public final class CodeTaglet implements Taglet {
                 final ClassOrInterfaceDeclaration declaration = parse
                         .getLocalDeclarationFromClassname(fullyQualifiedClassName)
                         .get(0);
-                final MethodDeclaration method = declaration.getMethodsByName(methodName).get(0);
+                final List<MethodDeclaration> methods = declaration.getMethodsByName(methodName);
+                if (methods.isEmpty()) {
+                    throw new RuntimeException("Method " + methodName + " not found in " + testFile.getAbsolutePath());
+                }
+                final MethodDeclaration method = methods.get(0);
                 final String bodyRange = Arrays
                         .stream(method.getBody().get().getTokenRange().get().toString().split("\n"))
                         .map(line -> line.replaceFirst("        ", ""))
