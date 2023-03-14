@@ -7,7 +7,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
 import javax.lang.model.element.Element;
-import javax.tools.JavaFileManager;
 import java.util.*;
 
 public class ToCTaglet implements Taglet {

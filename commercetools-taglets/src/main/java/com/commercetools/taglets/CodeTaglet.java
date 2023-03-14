@@ -8,7 +8,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.MessageFormat;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import javax.lang.model.element.Element;
@@ -24,6 +27,7 @@ import com.sun.source.doctree.DocTree;
 
 public final class CodeTaglet implements Taglet {
 
+    private static final Logger LOGGER = Logger.getLogger(CodeTaglet.class.getName());
     private static List<File> directories;
 
     private static final Map<File, CompilationUnit> parsedFiles = new HashMap<>();
@@ -128,9 +132,7 @@ public final class CodeTaglet implements Taglet {
                     + pathToGitHubTestFile + "\" target=\"_blank\">test code</a>.</pre>" + "</div>";
         }
         catch (final Exception e) {
-            System.err.println(e);
-            System.err.println("in");
-            System.err.println(element);
+            LOGGER.log(Level.SEVERE, MessageFormat.format("{0} in {1}",e, element));
             throw e;
         }
 
