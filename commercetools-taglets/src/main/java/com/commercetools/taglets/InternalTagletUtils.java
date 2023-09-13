@@ -19,8 +19,13 @@ public final class InternalTagletUtils {
                                                       .getAbsolutePath()
                                                       .replace("/target/site/apidocs", "")
                                                       .replace("/target/apidocs", "")).getParentFile();
+        return projectRootFile(parentFile);
+    }
+
+    public static File projectRootFile(File file) {
+        final File parentFile = file.getParentFile();
         final boolean isAlreadyAllRoot = new File(parentFile, ".gitignore").exists();
-        return isAlreadyAllRoot ? parentFile : parentFile.getParentFile().getAbsoluteFile();
+        return isAlreadyAllRoot ? parentFile : projectRootFile(parentFile);
     }
 
     public static RuntimeException usableException(final Taglet taglet, final String tagText, final Element element,
