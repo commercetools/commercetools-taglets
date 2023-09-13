@@ -28,7 +28,7 @@ jobs:
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           PASSPHRASE: ${{ secrets.PASSPHRASE }}
 
-      - run: ./gradlew -Pversion=${{ github.ref_name }} clean test javadoc publishToSonatype
+      - run: ./gradlew -Pversion=${{ github.ref_name }} clean test javadoc publishToSonatype closeAndReleaseSonatypeStagingRepository
         env:
           CTP_OSS_USER: ${{ secrets.OSS_USER }}
           CTP_OSS_SECRET: ${{ secrets.OSS_SECRET }}
