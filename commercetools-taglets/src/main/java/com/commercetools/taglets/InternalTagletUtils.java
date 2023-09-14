@@ -15,11 +15,7 @@ public final class InternalTagletUtils {
     }
 
     public static File allProjectsBaseFile() {
-        final File parentFile = new File(new File(".").getAbsoluteFile()
-                                                      .getAbsolutePath()
-                                                      .replace("/target/site/apidocs", "")
-                                                      .replace("/target/apidocs", "")).getParentFile();
-        return projectRootFile(parentFile);
+        return projectRootFile(new File(".").getAbsoluteFile());
     }
 
     public static File projectRootFile(File file) {
