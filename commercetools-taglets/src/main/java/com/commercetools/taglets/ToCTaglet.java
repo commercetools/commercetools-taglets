@@ -34,38 +34,42 @@ public class ToCTaglet implements Taglet {
 
     @Override
     public String toString(List<? extends DocTree> tags, Element element) {
-        String t = env.getElementUtils().getDocComment(element);
-        final Document parse = Jsoup.parse(t);
+        return buildToC(env.getElementUtils().getDocComment(element));
+    }
 
-        Elements headings = parse.body().select("h2, h3, h4");
+    public String buildToC(final String docComment) {
+        return buildToC(Jsoup.parse(docComment));
+    }
+
+    private String buildToC(final Document document) {
+        Elements headings = document.body().select("h2, h3, h4");
 
         org.jsoup.nodes.Element e = headings.first();
 
         StringBuilder toc = new StringBuilder("");
         toc.append("<b>Table of content</b>")
-           .append("<ul>");
+                .append("<ul>");
         int opened = 1;
         for (org.jsoup.nodes.Element heading: headings) {
             if (heading.tagName().compareTo(e.tagName()) > 0) {
                 toc.append("<ul>");
                 opened += 1;
             }
-
+            if (heading.tagName().compareTo(e.tagName()) < 0) {
+                toc.append("</ul>");
+                opened -= 1;
+            }
             toc.append("<li>");
             if (!heading.id().equals("")) {
                 toc.append("<a href=\"#")
-                   .append(heading.id())
-                   .append("\">");
+                        .append(heading.id())
+                        .append("\">");
             }
             toc.append(heading.html());
             if (!heading.id().equals("")) {
                 toc.append("</a>");
             }
             toc.append("</li>");
-            if (heading.tagName().compareTo(e.tagName()) < 0) {
-                toc.append("</ul>");
-                opened -= 1;
-            }
             e = heading;
         }
         toc.append(String.join("", Collections.nCopies(opened, "</ul>")));
