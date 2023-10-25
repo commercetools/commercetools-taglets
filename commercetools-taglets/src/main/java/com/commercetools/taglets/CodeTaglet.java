@@ -6,8 +6,6 @@ import static com.commercetools.taglets.InternalTagletUtils.usableException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.logging.Level;
@@ -25,13 +23,9 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.sun.source.doctree.DocTree;
 
-public final class CodeTaglet implements Taglet {
+public final class CodeTaglet extends BaseTaglet {
 
     private static final Logger LOGGER = Logger.getLogger(CodeTaglet.class.getName());
-    private static List<File> directories;
-
-    private static final Map<File, CompilationUnit> parsedFiles = new HashMap<>();
-    private static final Map<String, File> classFiles = new HashMap<>();
 
     @Override
     public Set<Taglet.Location> getAllowedLocations() {
@@ -140,46 +134,6 @@ public final class CodeTaglet implements Taglet {
 
     private String htmlEscape(final String res) {
         return res.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-    }
-
-    private File findFile(String fullyQualifiedClassName, String partialFilePath, final Element element)
-            throws IOException {
-        final File cwd = allProjectsBase();
-        boolean found = false;
-        File result = null;
-        if (directories == null) {
-            directories = Files.walk(cwd.toPath())
-                               .filter(Files::isDirectory)
-                               .filter(path -> !path.startsWith("."))
-                               .map(Path::toFile)
-                               .collect(Collectors.toList());
-        }
-        for (final File directory : directories) {
-            final List<String> possibleSubfolders = Arrays.asList("/src/test/java", "/src/it/java", "/src/integrationTest/java", "/src/main/java");
-            for (int subIndex = 0; subIndex < possibleSubfolders.size(); subIndex++) {
-                final String pathToTest = possibleSubfolders.get(subIndex) + "/" + partialFilePath;
-                final File attempt = new File(directory, pathToTest).getCanonicalFile();
-                if (attempt.exists() && !attempt.getPath().matches(".*\\/build\\/.*")) {
-                    if (found) {
-                        throw new RuntimeException(
-                                String.format("the class %s exists multiple times.", fullyQualifiedClassName));
-                    }
-                    else {
-                        result = attempt;
-                        found = true;
-                    }
-                }
-            }
-        }
-        if (!found) {
-            throw new RuntimeException(
-                    "cannot find file for " + fullyQualifiedClassName + " for " + element.getSimpleName() + " in " + cwd);
-        }
-        return result;
-    }
-
-    private File allProjectsBase() {
-        return InternalTagletUtils.allProjectsBaseFile();
     }
 
     private List<String> fileToArray(File testFile) throws FileNotFoundException {
